@@ -1,0 +1,206 @@
+---
+title: "Bat acoustic analysis"
+author: "Adam D. Smith & Scott R. McWilliams"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    css: custom.css
+    theme: united
+---
+
+```{r chunk-opts, echo=FALSE}
+# Set some knitr chunk options
+options(width = 250)
+knitr::opts_chunk$set(dev="png", 
+               dev.args=list(type="cairo"),
+               dpi=96,
+               message=FALSE, warning=FALSE, echo=FALSE, 
+               fig.path="./Rpubs/figs/", 
+               cache.path="./Rpubs/cache/")
+```
+
+```{r load-options-data}
+# Aliases and functions
+devtools::source_gist(9216051) # Rprofile.R
+devtools::source_gist(9216061) # various.R
+
+# Necessary packages
+toLoad <- c("ggplot2", "dsm", "grid")
+instant_pkgs(toLoad); rm(toLoad)
+
+# Setting theme for producing figures
+theme_set(theme_bw(base_size = 16))
+theme_update(panel.grid.minor = element_blank(),
+             panel.grid.major= element_blank(),
+             panel.border = element_blank(),
+             panel.background= element_blank(),
+             axis.line = element_line(color = 'black'),
+             legend.position = 'none')
+```
+
+# Weather and radar data manipulation and consolidation
+
+We do not run this source code as it takes some significant computation time.  We provide the raw data only for the temperature deviation calculation (calculate_temperature_deviation.R), although the raw data for the 1- and 5-minute ASOS and NEXRAD analysis are available from the corresponding author. 
+```{r weather-data, eval=FALSE}
+# Consolidate, organize, and calculate derived variables from 1-minute ASOS data
+# Produces ASOS1.rda
+source("./Source/read_ASOS1.R")
+
+# Use ASOS1 to calculate regional nightly averages of weather variables
+# Produces weatherVars.rda
+source("./Source/nightly_weather_ASOS1.R")
+
+# Consolidate, organize, and calculate derived variables from 5-minute ASOS data
+# Produces ASOS51.rda file
+# Produces nightSky.rda
+source("./Source/nightly_weather_ASOS5.R")
+
+# Calculate daily high temperature deviation from the 30-year average for a given day
+# Produces tempResids.rda
+source("./Source/calculate_temperature_deviation.R")
+
+# NEXRAD radar scan manipulation and reflectivity calculations
+# Produces NEXRAD_reflectivity.rda
+source("./Source/radar_assessment.R")
+
+# Consolidate 1- and 5-minute ASOS, temperature deviation, and radar data
+# Also calculates pre-sunset regional measurements for weather variables
+# Produces allWeather.rda
+source("./Source/consolidate_all_weather.R")
+```
+
+# Explore the weather data
+
+Here we plot the weather data and look for collinearity among predictor variables for the
+nightly average analysis (objective 1) as well as pre-sunset analysis (objective 2).  
+For nightly and sunset variables, temperature was *strongly* collinear (VIF > 17 and > 9, 
+respectively), particulary with date (dd), so we excluded it first.  Relative humidity was
+slightly collinear (VIF > 3) with a few variables in both data sets (e.g., wind profit, 
+visibility, delta RH), so it was subsequently dropped as well.
+
+```{r explore-weather, fig.width=10, fig.height=8}
+load("./Data/allWeather.rda")
+
+source("./Source/explore_weather_data.R")
+```
+
+# Combine weather data and bat data
+
+With the weather predictors finalized, we consolidate them with the bat acoustic activity data.
+
+```{r merge-bats-weather}
+# Load bat data
+load("./Data/bats.rda")
+
+source("./Source/merge_bats_weather.R") # Produces batsWeather.rda
+```
+
+# Bat and weather assessment
+
+## Generalized additive mixed models
+
+Now we construct the generalized additive mixed models (GAMMS) that (1) associate nightly bat activity
+with nightly averaged regional weather variables and (2) use pre-sunset regional weather variables
+to anticipate bat activity in the forthcoming night.  It calculates four GAMM models - nightly and
+pre-sunset GAMMs for high and low frequency bats.  Additionally for the pre-sunset GAMMs, it calculates
+a leave-one-out cross-validated prediction assessment.  We do not run the source code here, but
+the reader can easily do so by uncommenting the appropriate source lines below.
+
+Prior to fitting the GAMMs, the code calculates the nightly totals of high and low frequency bat passes
+and the number of active detectors (used as an offset in the GAMM models).  It also scales the nightly 
+and pre-sunset weather variables.
+
+```{r bat-activity-gamms, eval=FALSE}
+Produces bat_activity_gamms.rda
+# Contains the scaled nightly and pre-sunset data sets, the high and low frequency nightly and pre-sunset
+# generalized linear mixed models (used to generate an estimate for the negative binomial theta
+# parameter in the corresponding GAMMs), the high and low frequency nightly and pre-sunset GAMMs, and
+# the high and low frequency pre-sunset cross-validation results.
+source("./Source/bat_activity_gamms.R")
+```
+
+## Model validation and results
+
+With the GAMM models fitted, we evaluate several aspects of the model to visualized their appropriateness.
+Contained in the bat_activity_gamms.R source code are diagnostic plots of the model fit produced by the
+`rqgam.check` function of the `dsm` package.  This function ...  We recreated those plots for the the 
+four GAMM models here.  The model fits seem adequate.  We show only one example here, that of the high
+frequency nightly model, although the others are in the Rpubs->figs directory of this repository.
+```{r gam-check, fig.height=6.5, fig.width=6.5}
+load("./Output/bat_activity_gamms.rda")
+
+# High frequency nightly GAMM
+dsm:::rqgam.check(HF_nightGAMM$gam)
+
+# Low frequency nightly GAMM
+#dsm:::rqgam.check(LF_nightGAMM$gam)
+
+# High frequency pre-sunset GAMM
+#dsm:::rqgam.check(HF_sunsetGAMM$gam)
+
+# Low frequency nightly GAMM
+#dsm:::rqgam.check(LF_sunsetGAMM$gam)
+```
+
+We were concerned that the incomplete sampling over time and among sites, or the delayed start of monitoring
+in 2010 and 2011, may introduce bias into our estimated association between atmospheric conditions and bat 
+activity.  Additionally, our GAMM models used penalized quasi-likelihood (PQL), which can produce biased
+parameter estimates in certain conditions (see Bolker et al. 2009 citation in Appendix 1).  Thus, to evaluate
+potential bias in parameter estimates due to these factors, we bootstrapped 1,000 complete data sets (i.e., 
+from 2 Aug to 31 Oct of each year at all stations).  We then specified *a priori* associations between weather
+variables and bat activity in this full data set and then filtered each data set to match the sampling 
+structure of our data.  We also explored the effect of using known and estimated theta for the negative 
+binomial distribution.  This evaluation revealed essentially no bias in the estimated associations between 
+atmospheric conditions and bat activity.  We present the outcome for the filtered data set and estimated theta 
+here, but do not source the code as it takes many hours to complete.
+
+```{r check-estimate-bias, fig.width=6.5, fig.height=8}
+# Produces bat_bootstrap.rda
+# source("./Source/bootstrap_bat_activity.R")
+load("./Output/bat_bootstrap.rda")
+
+# Ignoring intercept, since we modeled site & year as random effects rather 
+# than fixed effects, which is how they were incorporated into the linear predictor
+trueVals <- data.frame(variable = c("theta", "doy1", "doy2", "doy3", "tempDev", "nightdTemp",
+                                    "nightWp12", "nightMb", "nightWsp", "vis"),
+                       value = c(fullGLMM$alpha, GLMMcoefs["ns(doy, df = 3)1"], GLMMcoefs["ns(doy, df = 3)2"],
+                                 GLMMcoefs["ns(doy, df = 3)3"],  GLMMcoefs["tempDev"],  GLMMcoefs["nightdTemp"],
+                                 GLMMcoefs["nightWp12"],  GLMMcoefs["nightMb"],  GLMMcoefs["nightWsp"],
+                                 GLMMcoefs["vis"]))
+
+# Violin plots of simulated parameters estimates compared with their true values
+# Code for violin plots adapted from Ben Bolker (http://rpubs.com/bbolker/3324)
+ggplot(simSummary, aes(x = variable, y = value)) + 
+  geom_boxplot(notch = TRUE) + 
+  facet_wrap(~variable, scales = "free") + 
+  geom_hline(data = trueVals, aes(yintercept = value), lwd = 2, alpha = 0.5, colour = "red") +
+  geom_violin(alpha = 0.2, colour = NA, fill = "blue") + 
+  theme(axis.text.x = element_blank(), axis.title.x=element_blank()) + 
+  ylab("Parameter estimate")
+```
+
+With that established, can view the relationships from the model fits.  The figures below are figures 
+2 and 3 in manuscript.
+
+```{r gamm-figures, fig.width=6.5, fig.height=9}
+# Figure 2
+source("./Source/make_figure_2.R")
+
+# Figure 3
+source("./Source/make_figure_3.R")
+```
+
+For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can
+visualize our categorization of the observed and predicted bat activity at its quantiles.
+
+```{r activity-quantiles, fig.height=6.5, fig.width=6.5}
+source("./Source/visualize_CV_compartmentalization.R")
+```
+
+Based on this compartmentalization, we can view the assessment of predictive accuracy based on the 
+leave-on-out cross-validation.  This is figure 4 in the manuscript, although the final (manuscript)
+version required a bit of modification from the raw version.
+```{r cv-assessment, fig.width=10, fig.height=6.5}
+source("./Source/make_figure_4.R")
+```
