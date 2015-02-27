@@ -29,7 +29,7 @@ for (var in plotVars) {
   # Have to accommodate interactions for a couple of variables
   interx <- var %in% c("nightdTemp", "tempDev")
   if (interx) {
-    doymean = mean(nightBats[, "doy"]); doysd = sd(nightBats[, "doy"])
+    doymean <- mean(nightBats[, "doy"]); doysd = sd(nightBats[, "doy"])
     newDat <- expand.grid(var_scaled = unique(scaledNightBats[, var]), 
                           doy = (seq(230, 290, 30) - doymean) / doysd,
                           ldetectors = log(3),
@@ -72,8 +72,8 @@ for (var in plotVars) {
   # Get some parameters for labels
   ymin <- floor(ifelse(interx, min(plotDat$fit), min(plotDat$lcl)))
   ymax <- ceiling(ifelse(interx, max(plotDat$fit), max(plotDat$ucl)))
-  yrange <- ymax - ymin
-  xmin <- min(plotDat$var); xmax <- max(plotDat$var); xrange <- xmax - xmin
+  y_range <- ymax - ymin
+  xmin <- min(plotDat$var); xmax <- max(plotDat$var); x_range <- xmax - xmin
   
   if (interx) {
     
@@ -89,17 +89,17 @@ for (var in plotVars) {
       geom_line(aes(colour = interaction(grp, as.factor(doy)), 
                     linetype = grp), size = 1.25) +
       scale_colour_manual("", values = c("gray70", rep("gray35", 2), "black")) +
-      annotate("segment", x = xmin + 0.65*xrange, xend = xmin + 0.75*xrange, size = 1.25, 
-               y = ymin + 0.225*yrange, yend = ymin + 0.225*yrange, color = "gray70") +
-      annotate("segment", x = xmin + 0.65*xrange, xend = xmin + 0.75*xrange, size = 1.25,  
-               y = ymin + 0.15*yrange, yend = ymin + 0.15*yrange, color = "gray35") +
-      annotate("segment", x = xmin + 0.65*xrange, xend = xmin + 0.75*xrange,  size = 1.25, 
-               y = ymin + 0.075*yrange, yend = ymin + 0.075*yrange, color = "black") +
-      annotate("text", x = xmin + 0.775*xrange, y = ymin + 0.225*yrange, hjust=0, 
+      annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range, size = 1.25, 
+               y = ymin + 0.225*y_range, yend = ymin + 0.225*y_range, color = "gray70") +
+      annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range, size = 1.25,  
+               y = ymin + 0.15*y_range, yend = ymin + 0.15*y_range, color = "gray35") +
+      annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range,  size = 1.25, 
+               y = ymin + 0.075*y_range, yend = ymin + 0.075*y_range, color = "black") +
+      annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.225*y_range, hjust=0, 
                label = "Early", size = 4) + 
-      annotate("text", x = xmin + 0.775*xrange, y = ymin + 0.15*yrange,  hjust=0, 
+      annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.15*y_range,  hjust=0, 
                label = "Middle", size = 4) + 
-      annotate("text", x = xmin + 0.775*xrange, y = ymin + 0.075*yrange,  hjust=0, 
+      annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.075*y_range,  hjust=0, 
                label = "Late", size = 4)   
     #facet_grid(grp ~ .)
 
