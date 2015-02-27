@@ -115,7 +115,7 @@ for (var in plotVars) {
     scale_linetype_manual("", labels = c("High frequency", "Low frequency"),
                           values = c("solid", "dashed")) +
     xlab(varNames[which(plotVars == var)]) +
-    theme(legend.position = "none", plot.margin = unit(rep(0.25, 4), "cm"))
+    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.15, 0.1, 0), "cm"))
   #  theme(legend.justification=c(0.5,1), legend.position=c(0.5, 1),
   #        legend.key = element_blank(), legend.direction = "horizontal",
   #        legend.key.width = unit(0.05, units = "npc"))
@@ -128,7 +128,7 @@ for (var in plotVars) {
   
   # Axis manipulation for multipanel plot
   p <-  p +
-    if(index %in% c(1, 3, 5)){
+    if(index %in% c(1, 4)){
       scale_y_continuous("Linear predictor", limits = c(ymin, ymax), 
                          breaks = seq(ymin, ymax, 1))
     } else {
@@ -146,6 +146,6 @@ for (var in plotVars) {
 }
 
 
-#png(file = "./Output/figure2.png", width = 6.5, height = 9, units = "in", res = 900)
-multiplot(plotlist = figure2, layout = matrix(1:6, ncol=2, byrow=T))
+#tiff(file = "./Output/figure2.tif", width = 10, height = 6, units = "in", res = 1000)
+multiplot(plotlist = figure2, layout = matrix(1:6, ncol=3, byrow=T))
 #dev.off()

@@ -1,3 +1,11 @@
+theme_set(theme_bw(base_size = 18))
+theme_update(panel.grid.minor = element_blank(),
+             panel.grid.major= element_blank(),
+             panel.border = element_blank(),
+             panel.background= element_blank(),
+             axis.line = element_line(color = 'black'),
+             legend.position = 'none')
+
 ### FIGURE 4 ###
 
 # Getting confusion matrices in table form
@@ -25,7 +33,7 @@ plotCVdat <- within(plotCVdat, {
 #plotCVdat$barpl <- c(rep(1, 4), rep(3.25, 4), rep(5.5, 4), rep(7.75, 4),
 #                     rep(2, 4), rep(4.25, 4), rep(6.5, 4), rep(8.75, 4))
 
-labels <- c("Low\n(\u2264 25%)", "Low/Medium\n(26 - 50%)", "Medium/High\n(51 - 75%)", 
+labels <- c("Low\n(\u2264 25%)", "Low/Med\n(26 - 50%)", "Med/High\n(51 - 75%)", 
                      "High\n(> 75%)")
 p <- ggplot(plotCVdat, aes(x = CVrateClass, y = value, fill = obs)) +
   geom_bar(position = "dodge", stat="identity") +
@@ -34,7 +42,7 @@ p <- ggplot(plotCVdat, aes(x = CVrateClass, y = value, fill = obs)) +
                     values = rev(c("#cccccc", "#969696", "#636363", "#252525")),
                     labels = c("Low", "Low/Med", "Med/High", "High")) + 
   scale_y_continuous("Proportion within activity class", limits = c(0, 0.7), expand = c(0,0), 
-                     breaks = seq(0, 0.7, 0.05), labels = insert_minor(c(0, 0.7), 0.2, 0.05)) +
+                     breaks = seq(0, 0.7, 0.1), labels = insert_minor(c(0, 0.7), 0.2, 0.1)) +
   scale_x_discrete("Predicted bat activity (percentiles)", labels = labels) + 
   #  scale_x_discrete("Predicted bat activity (percentiles)", labels = rep(c("HF", "LF"), 4),
   #                   limits = sort(unique(plotCVdat$barpl))) + 
@@ -56,9 +64,9 @@ p <- ggplot(plotCVdat, aes(x = CVrateClass, y = value, fill = obs)) +
 # Label panels
 xlab <- xrange(p, 1)[1] + diff(xrange(p, 1) * 0.01)
 p <- p + geom_text(aes(x = xlab, y = 0.7, label = label),
-                   hjust = 0, vjust=1, size = 8)
+                   hjust = 0, vjust=1, size = 9)
   
-#png(file = "./Output/figure4.png", width = 6, height = 6, units = "in", res = 600)
+#tiff(file = "./Output/figure4.tif", width = 5.75, height = 5.5, units = "in", res = 1000)
 print(p)
 #dev.off()
 
