@@ -108,15 +108,15 @@ for (var in plotVars) {
     scale_linetype_manual("", labels = c("High frequency", "Low frequency"),
                           values = c("solid", "dashed")) +
     xlab(varNames[which(plotVars == var)]) +
-    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.15, 0.1, 0), "cm"))
+    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.2, 0.1, 0), "cm"))
   #  theme(legend.justification=c(0.5,1), legend.position=c(0.5, 1),
   #        legend.key = element_blank(), legend.direction = "horizontal",
   #        legend.key.width = unit(0.05, units = "npc"))
   
   # Label panels
   index <- which(plotVars == var)
-  p <- p + annotate("text", x = max(plotDat$var), y = ymax,
-                    label = LETTERS[index], hjust = 1, vjust=0.6,
+  p <- p + annotate("text", x = min(plotDat$var), y = ymax,
+                    label = letters[index], hjust = 0, vjust=0.6,
                     size = 8)
   
   # Axis manipulation for multipanel plot

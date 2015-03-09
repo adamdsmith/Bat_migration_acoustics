@@ -8,7 +8,7 @@ par(mar = c(3.5, 4.5, 0.5, 0.5), mgp = c(2.25, 0.75, 0), cex = 0.9, cex.axis = 1
 
 for (i in 1:length(CVlist)) {
   model <- CVlist[[i]]
-  label <- LETTERS[i]
+  label <- letters[i]
   with(model, plot(CVrate, passRate, xlab = paste("Predicted bat pass rate", labels[i]),
                    yaxt = "n", ylab="", bty = "l"))
   axis(2, las=1)
@@ -18,6 +18,6 @@ for (i in 1:length(CVlist)) {
   # Adding quartile lines for predictions
   abline(h = quantile(model$passRate, c(0.25, 0.5, 0.75)), col = "blue", 
          lty = c("dotted", "dashed", "solid"))
-  text(x = max(model$CVrate), y = max(model$passRate),label = label, cex = 1.75)
+  text(x = min(model$CVrate), y = max(model$passRate),label = label, cex = 1.75)
 }
 #dev.off()
