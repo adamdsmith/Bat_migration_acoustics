@@ -62,11 +62,11 @@ p <- ggplot(plotCVdat, aes(x = CVrateClass, y = value, fill = obs)) +
   guides(fill = guide_legend(title.position = "top", title.hjust = 0.5))
 
 # Label panels
-xlab <- xrange(p, 1)[1] + diff(xrange(p, 1) * 0.01)
-p <- p + geom_text(aes(x = xlab, y = 0.7, label = label),
+xlab <- xrange(p, 1)[1] + diff(xrange(p, 1) * 0.03)
+p <- p + geom_text(aes(x = xlab, y = 0.695, label = label),
                    hjust = 0, vjust=1, size = 9)
   
-tiff(file = "./Output/figure4.tif", width = 5.75, height = 5.5, units = "in", res = 1000)
+#tiff(file = "./Output/figure4.tif", width = 5.75, height = 5.5, units = "in", res = 1000)
 print(p)
-dev.off()
+#dev.off()
 
