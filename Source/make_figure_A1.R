@@ -88,13 +88,15 @@ for (i in c("HF", "LF")) {
     xlab("Day of year") + 
     ylab("# of passes / detector / night") + 
     geom_line() +
-    annotate("text", x = max(tmpDat$doy), y = max(tmpDat$value), label = LETTERS[index], size = 10) + 
-    scale_x_continuous(breaks=c(215, 243, 273, 304), labels=c("3 Aug", "31 Aug", "30 Sep", "31 Oct")) +
+    annotate("text", x = min(tmpDat$doy), y = max(tmpDat$value), label = letters[index], hjust=0, size = 10) + 
+    scale_x_continuous(limits = c(212, 308), breaks=c(215, 243, 273, 304), expand = c(0,0),
+                       labels=c("3 Aug", "31 Aug", "30 Sep", "31 Oct")) +
     scale_linetype("") +
     theme(legend.justification=c(0.5,1), legend.position=c(0.5, 1),
           legend.direction = "horizontal")
   
 }
-png(file="./Output/figureA1.png", width = 6.5, height = 8, units = "in", res = 600)
+
+#tiff(file="./Output/figureA1.tif", width = 6.5, height = 8, units = "in", res = 600)
 multiplot(plotlist = phenPlots, layout = matrix(1:2, ncol=1))
-dev.off()
+#dev.off()
