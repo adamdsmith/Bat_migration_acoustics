@@ -112,7 +112,7 @@ and the number of active detectors (used as an offset in the GAMM models).  It a
 and pre-sunset weather variables.
 
 ```{r bat-activity-gamms, eval=FALSE}
-Produces bat_activity_gamms.rda
+# Produces bat_activity_gamms.rda
 # Contains the scaled nightly and pre-sunset data sets, the high and low frequency nightly and pre-sunset
 # generalized linear mixed models (used to generate an estimate for the negative binomial theta
 # parameter in the corresponding GAMMs), the high and low frequency nightly and pre-sunset GAMMs, and
