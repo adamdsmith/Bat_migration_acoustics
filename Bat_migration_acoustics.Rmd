@@ -93,7 +93,7 @@ With the weather predictors finalized, we consolidate them with the bat acoustic
 # Load bat data
 load("./Data/bats.rda")
 
-source("./Source/merge_bats_weather.R") # Produces batsWeather.rda
+source("./Source/merge_bats_weather.R") # Produces batsWeather.Rda
 ```
 
 # Bat and weather assessment
@@ -146,14 +146,14 @@ dsm:::rqgam.check(HF_nightGAMM$gam)
 We were concerned that the incomplete sampling over time and among sites, or the delayed start of monitoring
 in 2010 and 2011, may introduce bias into our estimated association between atmospheric conditions and bat 
 activity.  Additionally, our GAMM models used penalized quasi-likelihood (PQL), which can produce biased
-parameter estimates in certain conditions (see Bolker et al. 2009 citation in Appendix 1).  Thus, to evaluate
+parameter estimates in certain conditions (see Bolker et al. 2009 citation in Supporting Information S1).  Thus, to evaluate
 potential bias in parameter estimates due to these factors, we bootstrapped 1,000 complete data sets (i.e., 
 from 2 Aug to 31 Oct of each year at all stations).  We then specified *a priori* associations between weather
 variables and bat activity in this full data set and then filtered each data set to match the sampling 
 structure of our data.  We also explored the effect of using known and estimated theta for the negative 
 binomial distribution.  This evaluation revealed essentially no bias in the estimated associations between 
 atmospheric conditions and bat activity.  We present the outcome for the filtered data set and estimated theta 
-here, but do not source the code as it takes many hours to complete.
+here, but do not source the code as it takes many hours to complete.  The horizontal red bar in each panel represents the "true" parameter value used to simulate the complete data set and the violin plots represent the distribution of each parameter as estimated from the filtered model.
 
 ```{r check-estimate-bias, fig.width=6.5, fig.height=8}
 # Produces bat_bootstrap.rda

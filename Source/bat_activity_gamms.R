@@ -1,6 +1,8 @@
 # Loading necessary packages
 toLoad <- c("plyr", "glmmADMB", "splines", "mgcv", "dsm", "grid")
 #toLoad <- c("glmmADMB", "mgcv", "plyr", "reshape", "RCurl", "nlme", "ggplot2", "party")
+# To install glmmADMB you may have to use:
+# install.packages("glmmADMB", repos="http://r-forge.r-project.org", type="source")
 instant_pkgs(toLoad); rm(toLoad)
 
 # Define the nights to use and filter bats and weather data
