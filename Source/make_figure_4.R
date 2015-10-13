@@ -1,72 +1,145 @@
-theme_set(theme_bw(base_size = 18))
-theme_update(panel.grid.minor = element_blank(),
-             panel.grid.major= element_blank(),
-             panel.border = element_blank(),
-             panel.background= element_blank(),
-             axis.line = element_line(color = 'black'),
-             legend.position = 'none')
+##### FIGURE 4 ######
 
-### FIGURE 4 ###
+# Variables to plot, in desired plotting order
+plotVars <- c("doy", "setWp12", "tempDev", "setdTemp", "setd6Mb", "setVis")
+# Full variable names of variables to be plotted, in order of appearance
+varNames <- c("Day of year", "Wind profit (m/s)", 
+              expression(paste("Temperature deviation ("^"o", "C)", sep="")),
+              expression(paste(Delta, " temperature ("^"o", "C)", sep="")),
+              expression(paste(Delta, " pressure (mb)")),
+              "Visibility (mi)")
 
-# Getting confusion matrices in table form
-HFcm <- with(HF_sunsetCV, table(rateClass, CVrateClass))
-LFcm <- with(LF_sunsetCV, table(rateClass, CVrateClass))
+# List to hold ggplot objects
+figure4 <- vector(mode = "list", length = length(plotVars)); names(figure4) <- plotVars
 
-# Converting raw numbers to percentages
-HFcmPerc <- HFcm
-LFcmPerc <- LFcm
-for (i in 1:4) {
-  HFcmPerc[, i] <- HFcmPerc[, i] / colSums(HFcmPerc)[i]
-  LFcmPerc[, i] <- LFcmPerc[, i] / colSums(LFcmPerc)[i]
+# GAMM models to use
+gamList <- list(HF_sunsetGAMM, LF_sunsetGAMM)
+
+# String of variables used in the models, excluding offset
+modelVars <- c("tempDev", "setdTemp", "setWsp", "setMb", "setWp12", "setdRh", 
+               "setd6Mb", "setVis", "doy")
+
+for (var in plotVars) {
+  
+  plotDat <- data.frame()
+  
+  # Specify new data for prediction and intervals
+  # It contains raw and scaled values of variable of interest over its range
+  # in the data; all other variables will be held at their mean (i.e., scaled value of 0)
+  
+  # Have to accommodate interactions for a couple of variables
+  interx <- var %in% "tempDev"
+  if (interx) {
+    doymean <- mean(sunsetBats[, "doy"]); doysd = sd(sunsetBats[, "doy"])
+    newDat <- expand.grid(var_scaled = unique(scaledSunsetBats[, var]), 
+                          doy = (seq(230, 290, 30) - doymean) / doysd,
+                          ldetectors = log(3),
+                          var1 = 0, var2 = 0, var3 = 0, var4 = 0,
+                          var5 = 0, var6 = 0, var7 = 0)
+    newDat$var_raw <- rep(unique(sunsetBats[, var]), 3)
+    names(newDat) <- c(var, "doy", "ldetectors", 
+                       modelVars[-which(modelVars == var | modelVars == "doy")], 
+                       paste0(var, "_raw"))
+  } else {
+    newDat <- expand.grid(var_scaled = unique(scaledSunsetBats[, var]), 
+                          ldetectors = log(3),
+                          var1 = 0, var2 = 0, var3 = 0, var4 = 0,
+                          var5 = 0, var6 = 0, var7 = 0, var8 = 0)
+    newDat$var_raw <- unique(sunsetBats[, var])
+    names(newDat) <- c(var, "ldetectors", modelVars[-which(modelVars == var)], paste0(var, "_raw"))
+  }
+  
+  # Cycle through each model for this variable
+  for (g in 1:length(gamList)) {
+    model <- gamList[[g]]$gam
+    
+    # Predicting over the range of current variable, all others at means
+    out <- predict.gam(model, newdata = newDat, se.fit = TRUE)
+    # Centering Additive predictor relative to overall mean
+    out$fit <- out$fit - coef(model)["(Intercept)"] - log(3)
+    lcl <- with(out, fit - se.fit)
+    ucl <- with(out, fit + se.fit)
+    tmpDat <- data.frame(grp = ifelse(g == 1, "hiF", "lowF"),
+                         var = newDat[, paste0(var, "_raw")],
+                         doy = newDat[, "doy"], 
+                         fit = out$fit, lcl = lcl, ucl = ucl)
+    
+    plotDat <- rbind(plotDat, tmpDat)
+  }
+  
+  # Create plot
+  
+  # Get some parameters for labels
+  ymin <- floor(ifelse(interx, min(plotDat$fit), min(plotDat$lcl)))
+  ymax <- ceiling(ifelse(interx, max(plotDat$fit), max(plotDat$ucl)))
+  y_range <- ymax - ymin
+  xmin <- min(plotDat$var); xmax <- max(plotDat$var); x_range <- xmax - xmin
+  
+  if (interx) {
+    
+    p <- ggplot(plotDat, aes(x = var, y = fit, group = interaction(grp, as.factor(doy)))) + 
+      #      geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.3) + 
+      geom_line(aes(colour = interaction(grp, as.factor(doy)), 
+                    linetype = grp), size = 1.25) +
+      scale_colour_manual("", values = c(rep("gray70", 2), rep("gray35", 2), rep("black", 2))) +
+      annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range, size = 1.25, 
+               y = ymin + 0.225*y_range, yend = ymin + 0.225*y_range, color = "gray70") +
+      annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range, size = 1.25,  
+               y = ymin + 0.15*y_range, yend = ymin + 0.15*y_range, color = "gray35") +
+      annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range,  size = 1.25, 
+               y = ymin + 0.075*y_range, yend = ymin + 0.075*y_range, color = "black") +
+      annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.225*y_range, hjust=0, 
+               label = "Early", size = 4) + 
+      annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.15*y_range,  hjust=0, 
+               label = "Middle", size = 4) + 
+      annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.075*y_range,  hjust=0, 
+               label = "Late", size = 4)   
+    #facet_grid(grp ~ .)
+    
+  } else {
+    p <- ggplot(plotDat, aes(x = var, y = fit, group = grp)) + 
+      geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.3) + 
+      geom_line(aes(linetype = grp), size = 1.25)
+  }
+  
+  # Tidy the plot
+  p <- p + 
+    geom_rug(sides = "b") + 
+    scale_linetype_manual("", labels = c("High frequency", "Low frequency"),
+                          values = c("solid", "dashed")) +
+    xlab(varNames[which(plotVars == var)]) +
+    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.1, 0.1, 0), "cm"))
+  #  theme(legend.justification=c(0.5,1), legend.position=c(0.5, 1),
+  #        legend.key = element_blank(), legend.direction = "horizontal",
+  #        legend.key.width = unit(0.05, units = "npc"))
+  
+  # Label panels
+  index <- which(plotVars == var)
+  p <- p + annotate("text", x = min(plotDat$var), y = ymax,
+                    label = letters[index], hjust = 0, vjust=0.6,
+                    size = 8)
+  
+  # Axis manipulation for multipanel plot
+  p <-  p +
+    if(index %in% c(1, 4)){
+      scale_y_continuous("Additive predictor", limits = c(ymin, ymax), 
+                         breaks = seq(ymin, ymax, 1))
+    } else {
+      scale_y_continuous("",  limits = c(ymin, ymax), 
+                         breaks = seq(ymin, ymax, 1))
+    }
+  
+  if(var == "doy") {
+    p <- p + scale_x_continuous(breaks=c(227,258,288),
+                                labels=c("15 Aug", "15 Sep", "15 Oct"))
+  }
+  
+  figure4[[var]] <- p
+  
 }
 
-plotCVdat <- data.frame(rbind(melt(HFcmPerc), melt(LFcmPerc)), 
-                        grp = rep(c("HF", "LF"), each=16),
-                        label = rep(letters[1:2], each=16))
-plotCVdat <- within(plotCVdat, {
-  obs <- factor(rateClass)
-  CVrateClass <- factor(CVrateClass)
-})
 
-# Some trickery to improve the placement of grouped bars
-# Obsolete; retained for posterity's sake
-#plotCVdat$barpl <- c(rep(1, 4), rep(3.25, 4), rep(5.5, 4), rep(7.75, 4),
-#                     rep(2, 4), rep(4.25, 4), rep(6.5, 4), rep(8.75, 4))
-
-labels <- c("Low\n(\u2264 25%)", "Low/Med\n(26 - 50%)", "Med/High\n(51 - 75%)", 
-                     "High\n(> 75%)")
-p <- ggplot(plotCVdat, aes(x = CVrateClass, y = value, fill = obs)) +
-  geom_bar(position = "dodge", stat="identity") +
-  geom_bar(position = "dodge", stat="identity", color = "black", show_guide=FALSE) +
-  scale_fill_manual("Observed bat activity", 
-                    values = rev(c("#cccccc", "#969696", "#636363", "#252525")),
-                    labels = c("Low", "Low/Med", "Med/High", "High")) + 
-  scale_y_continuous("Proportion within activity class", limits = c(0, 0.7), expand = c(0,0), 
-                     breaks = seq(0, 0.7, 0.1), labels = insert_minor(c(0, 0.7), 0.2, 0.1)) +
-  scale_x_discrete("Predicted bat activity (percentiles)", labels = labels) + 
-  #  scale_x_discrete("Predicted bat activity (percentiles)", labels = rep(c("HF", "LF"), 4),
-  #                   limits = sort(unique(plotCVdat$barpl))) + 
-  #  annotate("text", x = 1.5, y = -0.1, vjust = 0.75, label = labels[1]) +
-  #  annotate("text", x = 3.75, y = -0.1, vjust = 0.75, label = labels[2]) +
-  #  annotate("text", x = 6, y = -0.1, vjust = 0.75, label = labels[3]) +
-  #  annotate("text", x = 8.25, y = -0.1, vjust = 0.75, label = labels[4]) +
-  facet_grid(grp ~ .) +
-  theme(axis.ticks.x = element_blank(), 
-        axis.title.x = element_text(vjust = 0),
-        strip.background = element_blank(), 
-        strip.text = element_blank(),
-        legend.key = element_rect(color = "black"),
-        legend.justification=c(0.5,1), legend.position=c(0.5, 1),
-        legend.direction = "horizontal",
-        panel.margin = unit(1, "lines")) +
-  guides(fill = guide_legend(title.position = "top", title.hjust = 0.5))
-
-# Label panels
-xlab <- xrange(p, 1)[1] + diff(xrange(p, 1) * 0.03)
-p <- p + geom_text(aes(x = xlab, y = 0.695, label = label),
-                   hjust = 0, vjust=1, size = 9)
-  
-#tiff(file = "./Output/figure4.tif", width = 5.75, height = 5.5, units = "in", res = 1000)
-print(p)
+#tiff(file = "./Output/figure4.tif", width = 10, height = 6, units = "in", 
+#     compression = "lzw", res = 1000)
+multiplot(plotlist = figure4, layout = matrix(1:6, ncol=3, byrow=T))
 #dev.off()
-

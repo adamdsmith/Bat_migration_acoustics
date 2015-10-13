@@ -1,23 +1,22 @@
 ##### FIGURE 3 ######
 
 # Variables to plot, in desired plotting order
-plotVars <- c("doy", "setWp12", "tempDev", "setdTemp", "setd6Mb", "setVis")
+plotVars <- c("doy", "nightWp12", "tempDev", "nightdTemp", "nightdMb")
 # Full variable names of variables to be plotted, in order of appearance
 varNames <- c("Day of year", "Wind profit (m/s)", 
               expression(paste("Temperature deviation ("^"o", "C)", sep="")),
               expression(paste(Delta, " temperature ("^"o", "C)", sep="")),
-              expression(paste(Delta, " pressure (mb)")),
-              "Visibility (mi)")
+              expression(paste(Delta, " pressure (mb)")))
 
 # List to hold ggplot objects
 figure3 <- vector(mode = "list", length = length(plotVars)); names(figure3) <- plotVars
 
 # GAMM models to use
-gamList <- list(HF_sunsetGAMM, LF_sunsetGAMM)
+gamList <- list(HF_nightGAMM, LF_nightGAMM)
 
 # String of variables used in the models, excluding offset
-modelVars <- c("tempDev", "setdTemp", "setWsp", "setMb", "setWp12", "setdRh", 
-               "setd6Mb", "setVis", "doy")
+modelVars <- c("tempDev", "nightdTemp", "nightWsp", "nightMb", "nightWp12", "nightdRh", 
+               "nightdMb", "propPrecip", "vis", "doy")
 
 for (var in plotVars) {
   
@@ -28,24 +27,25 @@ for (var in plotVars) {
   # in the data; all other variables will be held at their mean (i.e., scaled value of 0)
   
   # Have to accommodate interactions for a couple of variables
-  interx <- var %in% "tempDev"
+  interx <- var %in% c("nightdTemp", "tempDev")
   if (interx) {
-    doymean <- mean(sunsetBats[, "doy"]); doysd = sd(sunsetBats[, "doy"])
-    newDat <- expand.grid(var_scaled = unique(scaledSunsetBats[, var]), 
+    doymean <- mean(nightBats[, "doy"]); doysd = sd(nightBats[, "doy"])
+    newDat <- expand.grid(var_scaled = unique(scaledNightBats[, var]), 
                           doy = (seq(230, 290, 30) - doymean) / doysd,
                           ldetectors = log(3),
                           var1 = 0, var2 = 0, var3 = 0, var4 = 0,
-                          var5 = 0, var6 = 0, var7 = 0)
-    newDat$var_raw <- rep(unique(sunsetBats[, var]), 3)
+                          var5 = 0, var6 = 0, var7 = 0, var8 = 0)
+    newDat$var_raw <- rep(unique(nightBats[, var]), 3)
     names(newDat) <- c(var, "doy", "ldetectors", 
                        modelVars[-which(modelVars == var | modelVars == "doy")], 
                        paste0(var, "_raw"))
   } else {
-    newDat <- expand.grid(var_scaled = unique(scaledSunsetBats[, var]), 
+    newDat <- expand.grid(var_scaled = unique(scaledNightBats[, var]), 
                           ldetectors = log(3),
                           var1 = 0, var2 = 0, var3 = 0, var4 = 0,
-                          var5 = 0, var6 = 0, var7 = 0, var8 = 0)
-    newDat$var_raw <- unique(sunsetBats[, var])
+                          var5 = 0, var6 = 0, var7 = 0, var8 = 0,
+                          var9 = 0)
+    newDat$var_raw <- unique(nightBats[, var])
     names(newDat) <- c(var, "ldetectors", modelVars[-which(modelVars == var)], paste0(var, "_raw"))
   }
   
@@ -55,7 +55,7 @@ for (var in plotVars) {
     
     # Predicting over the range of current variable, all others at means
     out <- predict.gam(model, newdata = newDat, se.fit = TRUE)
-    # Centering linear predictor relative to overall mean
+    # Centering Additive predictor relative to overall mean
     out$fit <- out$fit - coef(model)["(Intercept)"] - log(3)
     lcl <- with(out, fit - se.fit)
     ucl <- with(out, fit + se.fit)
@@ -77,11 +77,18 @@ for (var in plotVars) {
   
   if (interx) {
     
+    # Get rid of unimportant interactions
+    if (var == "nightdTemp") {
+      plotDat <- subset(plotDat, grp == "hiF" | grp == "lowF" & doy == (260 - doymean) / doysd)
+    } else {
+      plotDat <- subset(plotDat, grp == "lowF" | grp == "hiF" & doy == (260 - doymean) / doysd)
+    }
+    
     p <- ggplot(plotDat, aes(x = var, y = fit, group = interaction(grp, as.factor(doy)))) + 
       #      geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.3) + 
       geom_line(aes(colour = interaction(grp, as.factor(doy)), 
                     linetype = grp), size = 1.25) +
-      scale_colour_manual("", values = c(rep("gray70", 2), rep("gray35", 2), rep("black", 2))) +
+      scale_colour_manual("", values = c("gray70", rep("gray35", 2), "black")) +
       annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range, size = 1.25, 
                y = ymin + 0.225*y_range, yend = ymin + 0.225*y_range, color = "gray70") +
       annotate("segment", x = xmin + 0.65*x_range, xend = xmin + 0.75*x_range, size = 1.25,  
@@ -95,7 +102,7 @@ for (var in plotVars) {
       annotate("text", x = xmin + 0.775*x_range, y = ymin + 0.075*y_range,  hjust=0, 
                label = "Late", size = 4)   
     #facet_grid(grp ~ .)
-    
+
   } else {
     p <- ggplot(plotDat, aes(x = var, y = fit, group = grp)) + 
       geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.3) + 
@@ -108,7 +115,7 @@ for (var in plotVars) {
     scale_linetype_manual("", labels = c("High frequency", "Low frequency"),
                           values = c("solid", "dashed")) +
     xlab(varNames[which(plotVars == var)]) +
-    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.2, 0.1, 0), "cm"))
+    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.1, 0.1, 0), "cm"))
   #  theme(legend.justification=c(0.5,1), legend.position=c(0.5, 1),
   #        legend.key = element_blank(), legend.direction = "horizontal",
   #        legend.key.width = unit(0.05, units = "npc"))
@@ -122,7 +129,7 @@ for (var in plotVars) {
   # Axis manipulation for multipanel plot
   p <-  p +
     if(index %in% c(1, 4)){
-      scale_y_continuous("Linear predictor", limits = c(ymin, ymax), 
+      scale_y_continuous("Additive predictor", limits = c(ymin, ymax), 
                          breaks = seq(ymin, ymax, 1))
     } else {
       scale_y_continuous("",  limits = c(ymin, ymax), 
@@ -139,6 +146,7 @@ for (var in plotVars) {
 }
 
 
-#tiff(file = "./Output/figure3.tif", width = 10, height = 6, units = "in", res = 1000)
+#tiff(file = "./Output/figure3.tif", width = 10, height = 6, units = "in", 
+#     compression = "lzw", res = 1000)
 multiplot(plotlist = figure3, layout = matrix(1:6, ncol=3, byrow=T))
 #dev.off()
