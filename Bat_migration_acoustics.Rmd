@@ -16,8 +16,7 @@ knitr::opts_chunk$set(dev="png",
                dev.args=list(type="cairo"),
                dpi=96,
                message=FALSE, warning=FALSE, echo=FALSE, 
-               fig.path="./Rpubs/figs/", 
-               cache.path="./Rpubs/cache/")
+               fig.path="./Rpubs/figs/")
 ```
 
 ```{r load-options-data}
@@ -72,12 +71,7 @@ source("./Source/consolidate_all_weather.R")
 
 # Explore the weather data
 
-Here we plot the weather data and look for collinearity among predictor variables for the
-nightly average analysis (objective 1) as well as pre-sunset analysis (objective 2).  
-For nightly and sunset variables, temperature was *strongly* collinear (VIF > 17 and > 9, 
-respectively), particulary with date (dd), so we excluded it first.  Relative humidity was
-slightly collinear (VIF > 3) with a few variables in both data sets (e.g., wind profit, 
-visibility, delta RH), so it was subsequently dropped as well.
+Here we plot the weather data and look for collinearity among predictor variables for the nightly average analysis (objective 1) as well as pre-sunset analysis (objective 2).  For nightly and sunset variables, temperature was *strongly* collinear (VIF > 17 and > 9, respectively), particulary with date (dd), so we excluded it first.  Relative humidity was slightly collinear (VIF > 3) with a few variables in both data sets (e.g., wind profit, visibility, delta RH), so it was subsequently dropped as well.
 
 ```{r explore-weather, fig.width=10, fig.height=8}
 load("./Data/allWeather.rda")
@@ -100,16 +94,9 @@ source("./Source/merge_bats_weather.R") # Produces batsWeather.Rda
 
 ## Generalized additive mixed models
 
-Now we construct the generalized additive mixed models (GAMMS) that (1) associate nightly bat activity
-with nightly averaged regional weather variables and (2) use pre-sunset regional weather variables
-to anticipate bat activity in the forthcoming night.  It calculates four GAMM models - nightly and
-pre-sunset GAMMs for high and low frequency bats.  Additionally for the pre-sunset GAMMs, it calculates
-a leave-one-out cross-validated prediction assessment.  We do not run the source code here, but
-the reader can easily do so by uncommenting the appropriate source lines below.
+Now we construct the generalized additive mixed models (GAMMS) that (1) associate nightly bat activity with nightly averaged regional weather variables and (2) use pre-sunset regional weather variables to anticipate bat activity in the forthcoming night.  It calculates four GAMM models - nightly and pre-sunset GAMMs for high and low frequency bats.  Additionally for the pre-sunset GAMMs, it calculates a leave-one-out cross-validated prediction assessment.  We do not run the source code here, but the reader can easily do so by uncommenting the appropriate source lines below.
 
-Prior to fitting the GAMMs, the code calculates the nightly totals of high and low frequency bat passes
-and the number of active detectors (used as an offset in the GAMM models).  It also scales the nightly 
-and pre-sunset weather variables.
+Prior to fitting the GAMMs, the code calculates the nightly totals of high and low frequency bat passes and the number of active detectors (used as an offset in the GAMM models).  It also scales the nightly and pre-sunset weather variables.
 
 ```{r bat-activity-gamms, eval=FALSE}
 # Produces bat_activity_gamms.rda
@@ -122,11 +109,8 @@ source("./Source/bat_activity_gamms.R")
 
 ## Model validation and results
 
-With the GAMM models fitted, we evaluate several aspects of the model to visualized their appropriateness.
-Contained in the bat_activity_gamms.R source code are diagnostic plots of the model fit produced by the
-`rqgam.check` function of the `dsm` package.  This function ...  We recreated those plots for the the 
-four GAMM models here.  The model fits seem adequate.  We show only one example here, that of the high
-frequency nightly model, although the others are in the Rpubs->figs directory of this repository.
+With the GAMM models fitted, we evaluate several aspects of the model to visualized their appropriateness.  Contained in the bat_activity_gamms.R source code are diagnostic plots of the model fit produced by the `rqgam.check` function of the `dsm` package.  All model fits seem adequate.  We show only one example here, that of the high frequency nightly model, although the others are in the `Rpubs->figs` directory of this repository.
+
 ```{r gam-check, fig.height=6.5, fig.width=6.5}
 load("./Output/bat_activity_gamms.rda")
 
@@ -143,19 +127,9 @@ dsm:::rqgam.check(HF_nightGAMM$gam)
 #dsm:::rqgam.check(LF_sunsetGAMM$gam)
 ```
 
-We were concerned that the incomplete sampling over time and among sites, or the delayed start of monitoring
-in 2010 and 2011, may introduce bias into our estimated association between atmospheric conditions and bat 
-activity.  Additionally, our GAMM models used penalized quasi-likelihood (PQL), which can produce biased
-parameter estimates in certain conditions (see Bolker et al. 2009 citation in Supporting Information S1).  Thus, to evaluate
-potential bias in parameter estimates due to these factors, we bootstrapped 1,000 complete data sets (i.e., 
-from 2 Aug to 31 Oct of each year at all stations).  We then specified *a priori* associations between weather
-variables and bat activity in this full data set and then filtered each data set to match the sampling 
-structure of our data.  We also explored the effect of using known and estimated theta for the negative 
-binomial distribution.  This evaluation revealed essentially no bias in the estimated associations between 
-atmospheric conditions and bat activity.  We present the outcome for the filtered data set and estimated theta 
-here, but do not source the code as it takes many hours to complete.  The horizontal red bar in each panel represents the "true" parameter value used to simulate the complete data set and the violin plots represent the distribution of each parameter as estimated from the filtered model.
+We were concerned that the incomplete sampling over time and among sites, or the delayed start of monitoring in 2010 and 2011, may introduce bias into our estimated association between atmospheric conditions and bat  activity.  Additionally, our GAMM models used penalized quasi-likelihood (PQL), which can produce biased parameter estimates in certain conditions (see Bolker et al. 2009 citation in Supporting Information S1).  Thus, to evaluate potential bias in parameter estimates due to these factors, we bootstrapped 1,000 complete data sets (i.e., from 2 Aug to 31 Oct of each year at all stations).  We then specified *a priori* associations between weather variables and bat activity in this full data set and then filtered each data set to match the sampling structure of our data.  We also explored the effect of using known and estimated theta for the negative binomial distribution.  This evaluation revealed essentially no bias in the estimated associations between atmospheric conditions and bat activity.  We present the outcome for the filtered data set and estimated theta here, but do not source the code as it takes many hours to complete.  The horizontal red bar in each panel represents the "true" parameter value used to simulate the complete data set and the violin plots represent the distribution of each parameter as estimated from the filtered model.
 
-```{r check-estimate-bias, fig.width=6.5, fig.height=8}
+```{r check-estimate-bias, fig.width=8, fig.height=4.5}
 # Produces bat_bootstrap.rda
 # source("./Source/bootstrap_bat_activity.R")
 load("./Output/bat_bootstrap.rda")
@@ -173,35 +147,33 @@ trueVals <- data.frame(variable = c("theta", "doy1", "doy2", "doy3", "tempDev", 
 # Code for violin plots adapted from Ben Bolker (http://rpubs.com/bbolker/3324)
 ggplot(simSummary, aes(x = variable, y = value)) + 
   geom_boxplot(notch = TRUE) + 
-  facet_wrap(~variable, scales = "free") + 
+  facet_wrap(~variable, scales = "free", ncol = 5) + 
   geom_hline(data = trueVals, aes(yintercept = value), lwd = 2, alpha = 0.5, colour = "red") +
   geom_violin(alpha = 0.2, colour = NA, fill = "blue") + 
   theme(axis.text.x = element_blank(), axis.title.x=element_blank()) + 
   ylab("Parameter estimate")
 ```
 
-With that established, we can view the relationships from the model fits (figures 2 and 3 in the manuscript).
-
-```{r figure2, fig.width=10, fig.height=6.5}
-# Figure 2
-source("./Source/make_figure_2.R")
-```
+With that established, we can view the relationships from the model fits (figures 3 and 4 in the manuscript).
 
 ```{r figure3, fig.width=10, fig.height=6.5}
 # Figure 3
 source("./Source/make_figure_3.R")
 ```
 
-For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can
-visualize our categorization of the observed and predicted bat activity at its quantiles.
+```{r figure4, fig.width=10, fig.height=6.5}
+# Figure 4
+source("./Source/make_figure_4.R")
+```
+
+For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can visualize observed vs. predicted bat activity and identify the quantiles used to categorize the predictions into activity classes (figure S1 in supporting information S1).
 
 ```{r activity-quantiles, fig.height=6.5, fig.width=6.5}
 source("./Source/visualize_CV_compartmentalization.R")
 ```
 
-Based on this compartmentalization, we can view the assessment of predictive accuracy based on the 
-leave-on-out cross-validation (figure 4 in the manuscript).
+Based on this compartmentalization, we can view the assessment of predictive accuracy based on the leave-on-out cross-validation (figure 5 in the manuscript).
 
 ```{r cv-assessment, fig.width=6.5, fig.height=6.5}
-source("./Source/make_figure_4.R")
+source("./Source/make_figure_5.R")
 ```
