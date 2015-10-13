@@ -65,6 +65,9 @@ HF_nightGAMM <- gamm(hiPasses ~ s(doy) + tempDev + nightdTemp + doy:tempDev + do
                      correlation=corARMA(form = ~time|year, p = 1),
                      niterPQL = 100)
 
+source("./Source/r.squaredGAMM.R")
+(HF_r2 <- r.squaredGAMM(HF_nightGAMM, scaledNightBats, offset = "ldetectors"))
+
 # Generating desired output
 summary(HF_nightGAMM$gam)
 arrange(data.frame(Variable = row.names(summary(HF_nightGAMM$gam)$p.table),
@@ -97,6 +100,9 @@ LF_nightGAMM <- gamm(loPasses ~ doy + tempDev + nightdTemp + doy:tempDev +
                      family=negbin(LF_nightTheta),
                      correlation=corARMA(form = ~time|year, p = 1),
                      niterPQL = 100)
+
+# Since no smooth terms, lme object from LF_nightGAMM can be used to extract R2
+(LF_r2 <- r.squaredGLMM(LF_nightGAMM$lme))
 
 # Generating desired output
 summary(LF_nightGAMM$gam)
