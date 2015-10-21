@@ -9,8 +9,14 @@ load("./Data/batPhenology.rda")
 
 # Load necessary packages
 toLoad <- c("ggplot2", "gtable", "plyr", "reshape", "lubridate", "splines", 
-            "glmmADMB", "mgcv", "cowplot")
+            "mgcv", "cowplot")
 instant_pkgs(toLoad); rm(toLoad)
+
+# To install glmmADMB you may have to use:
+install.packages("glmmADMB", repos=c("http://glmmadmb.r-forge.r-project.org/repos", 
+                                     getOption("repos")),
+                 type="source")
+library("glmmADMB")
 
 # Setting theme
 theme_set(theme_bw(base_size = 16))
@@ -137,7 +143,12 @@ for (i in c("HF", "LF")) {
   phenPlots[[i]] <- ggdraw(p)
 }
 
-tiff(file="./Output/figure2.tif", width = 6, height = 7.5, compression = "lzw",
-     units = "in", res = 1000)
+#tiff(file="./Output/figure2.tif", width = 6, height = 7.5, compression = "lzw",
+#     units = "in", res = 1000)
+#multiplot(plotlist = phenPlots, layout = matrix(1:2, ncol=1))
+#dev.off()
+
+setEPS()
+postscript("./Output/figure2.eps", width = 6, height = 7.5)
 multiplot(plotlist = phenPlots, layout = matrix(1:2, ncol=1))
 dev.off()
