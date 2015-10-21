@@ -115,7 +115,7 @@ for (var in plotVars) {
     scale_linetype_manual("", labels = c("High frequency", "Low frequency"),
                           values = c("solid", "dashed")) +
     xlab(varNames[which(plotVars == var)]) +
-    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.1, 0.1, 0), "cm"))
+    theme(legend.position = "none", plot.margin = unit(c(0.1, 0.22, 0.1, 0), "cm"))
   #  theme(legend.justification=c(0.5,1), legend.position=c(0.5, 1),
   #        legend.key = element_blank(), legend.direction = "horizontal",
   #        legend.key.width = unit(0.05, units = "npc"))
@@ -149,4 +149,9 @@ for (var in plotVars) {
 #tiff(file = "./Output/figure3.tif", width = 10, height = 6, units = "in", 
 #     compression = "lzw", res = 1000)
 multiplot(plotlist = figure3, layout = matrix(1:6, ncol=3, byrow=T))
+#dev.off()
+
+#setEPS()
+#postscript("./Output/figure3.eps", width = 10, height = 6)
+#multiplot(plotlist = figure3, layout = matrix(1:6, ncol=3, byrow=T))
 #dev.off()

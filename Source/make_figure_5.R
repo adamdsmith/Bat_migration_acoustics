@@ -71,3 +71,8 @@ p <- p + geom_text(aes(x = xlab, y = 0.695, label = label),
 print(p)
 #dev.off()
 
+#setEPS()
+#postscript("./Output/figure5.eps", width = 5.75, height = 5.5)
+#print(p)
+#dev.off()
+
