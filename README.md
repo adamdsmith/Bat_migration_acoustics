@@ -6,6 +6,18 @@ Authors (affiliation):
 
 <sup>*</sup>corresponding author; current address: U.S. Fish & Wildlife Service, National Wildlife Refuge System, Southeast Inventory & Monitoring Branch, 135 Phoenix Road, Athens, GA 30605 USA)
 
-To see an overview of the analysis, open the `Bat_migration_acoustics.html` in your favorite browser.  
-
 The easiest way to access the data and code necessary to reproduce the entire analysis is to [fork and clone](https://help.github.com/articles/fork-a-repo/) this repository.
+
+To see an overview of the analysis (Supporting Information S2 of the manuscript):
+
+1. Fork this repository
+  - all code and data is available in this repository
+2. Open [R](http://www.r-project.org) on a computer with internet access
+3. Install the [devtools](http://cran.r-project.org/package=devtools) and [knitr](http://cran.r-project.org/package=knitr) packages, if necessary 
+  - install.packages("devtools")
+  - install.packages("knitr")
+4. Knit the file to produce an html document
+  - knitr::knit2html('PATH/TO/Bat_migration_acoustics.Rmd')
+5. Open the resulting Word document
+  - we've included this file (Bat_migration_acoustics.docx) if you'd rather download it and open it directly
+
