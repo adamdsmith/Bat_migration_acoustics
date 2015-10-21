@@ -3,8 +3,10 @@ toLoad <- c("plyr", "splines", "mgcv", "dsm", "grid")
 instant_pkgs(toLoad); rm(toLoad)
 
 # To install glmmADMB you may have to use:
-install.packages("glmmADMB", repos="http://r-forge.r-project.org", type="source")
-library(glmmADMB)
+install.packages("glmmADMB", repos=c("http://glmmadmb.r-forge.r-project.org/repos", 
+                                     getOption("repos")),
+                 type="source")
+library("glmmADMB")library(glmmADMB)
 
 # Define the nights to use and filter bats and weather data
 # Identify nights with at least three active detectors;  
