@@ -173,10 +173,10 @@ for (var in plotVars) {
 }
 
 
-tiff(file = "./Output/figure4.tif", width = 8, height = 4.8, units = "in", 
-     compression = "lzw", res = 1000)
+#tiff(file = "./Output/figure4.tif", width = 8, height = 4.8, units = "in", 
+#     compression = "lzw", res = 1000)
 multiplot(plotlist = figure4, layout = matrix(1:6, ncol=3, byrow=T))
-dev.off()
+#dev.off()
 
 #setEPS()
 #postscript("./Output/figure4.eps", width = 10, height = 6)
