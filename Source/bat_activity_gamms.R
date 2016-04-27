@@ -1,12 +1,12 @@
 # Loading necessary packages
-toLoad <- c("plyr", "splines", "mgcv", "dsm", "grid")
+toLoad <- c("plyr", "splines", "mgcv", "dsm", "grid", "lme4", "MuMIn")
 instant_pkgs(toLoad); rm(toLoad)
 
 # To install glmmADMB you may have to use:
-install.packages("glmmADMB", repos=c("http://glmmadmb.r-forge.r-project.org/repos", 
-                                     getOption("repos")),
-                 type="source")
-library("glmmADMB")library(glmmADMB)
+#install.packages("glmmADMB", repos=c("http://glmmadmb.r-forge.r-project.org/repos", 
+#                                     getOption("repos")),
+#                 type="source")
+library(glmmADMB)
 
 # Define the nights to use and filter bats and weather data
 # Identify nights with at least three active detectors;  
@@ -45,10 +45,34 @@ scaledSunsetBats <- within(scaledSunsetBats, {
 })
 scaledSunsetBats <- arrange(scaledSunsetBats, year, time)
 
+overdisp_fun <- function(model) {
+    ## number of variance parameters in 
+    ##   an n-by-n variance-covariance matrix
+    vpars <- function(m) {
+        nrow(m)*(nrow(m)+1)/2
+    }
+    model.df <- sum(sapply(VarCorr(model),vpars))+length(fixef(model))
+    rdf <- nrow(model.frame(model))-model.df
+    rp <- residuals(model,type="pearson")
+    Pearson.chisq <- sum(rp^2)
+    prat <- Pearson.chisq/rdf
+    pval <- pchisq(Pearson.chisq, df=rdf, lower.tail=FALSE)
+    c(chisq=Pearson.chisq,ratio=prat,rdf=rdf,p=pval)
+}
+
 ################################################################################################
 # Objective 1 - Associations between nightly atmospheric conditions and nightly bat activity
 ################################################################################################
 # Hi frequency bats
+# Check overdispersion (approximately)
+HF_nightGLMM <- glmer(hiPasses ~ ns(doy, df = 3) + nightWsp + nightMb + 
+                             nightWp12 + nightdTemp + nightdMb + nightdRh + 
+                             propPrecip + tempDev + vis + tempDev:doy + 
+                             nightdTemp:doy + offset(ldetectors) + (1|year), 
+                         data = scaledNightBats,
+                         family="poisson")
+overdisp_fun(HF_nightGLMM) ## > 106
+
 # Get approximation of theta for use in GAMM
 HF_nightGLMM <- glmmadmb(hiPasses ~ ns(doy, df = 3) + nightWsp + nightMb + 
                            nightWp12 + nightdTemp + nightdMb + nightdRh + 
@@ -56,6 +80,7 @@ HF_nightGLMM <- glmmadmb(hiPasses ~ ns(doy, df = 3) + nightWsp + nightMb +
                            nightdTemp:doy + offset(ldetectors) + (1|year), 
                          data = scaledNightBats,
                          family="nbinom")
+overdisp_fun(HF_nightGLMM) ## < 1.21
 HF_nightTheta <- HF_nightGLMM$alpha
 
 # Fit the GAMM
@@ -84,6 +109,14 @@ par(mfrow=c(1,1))
 rqgam.check(HF_nightGAMM$gam)
 
 # GAMM - Low frequency bats
+# Check overdispersion (approximately)
+LF_nightGLMM <- glmer(loPasses ~ ns(doy, df=3) + nightWsp + nightMb +
+                             nightWp12 + nightdTemp + nightdMb + nightdRh + 
+                             propPrecip + tempDev + vis + tempDev:doy + 
+                             nightdTemp:doy + offset(ldetectors) + (1|year),
+                         data = scaledNightBats,
+                         family="poisson")
+overdisp_fun(LF_nightGLMM) ## >48
 # Get approximation of theta
 LF_nightGLMM <- glmmadmb(loPasses ~ ns(doy, df=3) + nightWsp + nightMb +
                            nightWp12 + nightdTemp + nightdMb + nightdRh + 
@@ -91,6 +124,7 @@ LF_nightGLMM <- glmmadmb(loPasses ~ ns(doy, df=3) + nightWsp + nightMb +
                            nightdTemp:doy + offset(ldetectors) + (1|year),
                          data = scaledNightBats,
                          family="nbinom")
+overdisp_fun(LF_nightGLMM) ## < 1.31
 LF_nightTheta <- LF_nightGLMM$alpha
 
 # Fit the GAMM
@@ -130,6 +164,14 @@ rqgam.check(LF_nightGAMM$gam)
 # with glmmPQL (to retain autoregressive structure)
 # We fit with gamm (mgcv) nonetheless, to better visualize the model fit
 
+# Check overdispersion (approximately)
+HF_sunsetGLMM <- glmer(hiPasses ~ doy + setWsp + setWp12 +
+                              setd6Mb + tempDev + tempDev:doy +
+                              offset(ldetectors) + (1|year),
+                          data = scaledSunsetBats,
+                          family="poisson")
+overdisp_fun(HF_sunsetGLMM) ## > 129
+
 # Get approximation of theta
 # This model has been updated to reflect the final variable evaluation (i.e., after variable reduction
 # using penalized spline terms); it initially included all variables and interactions of interest, 
@@ -139,7 +181,7 @@ HF_sunsetGLMM <- glmmadmb(hiPasses ~ doy + setWsp + setWp12 +
                             offset(ldetectors) + (1|year),
                           data = scaledSunsetBats,
                           family="nbinom")
-
+overdisp_fun(HF_sunsetGLMM) ## < 1.19
 HF_sunsetTheta <- HF_sunsetGLMM$alpha
 
 # Fit GAMM
@@ -207,16 +249,23 @@ HF_sunsetCV = within(HF_sunsetCV, {
 })
 
 # GAMM - Low frequency bat activity
-
+# Check overdispersion (approximately)
+LF_sunsetGLMM <- glmer(loPasses ~ doy + setdRh + tempDev + setdTemp +
+                              setWp12 + tempDev:doy + setdTemp:doy +
+                              setVis + offset(ldetectors) + (1|year), 
+                          data = scaledSunsetBats, 
+                          family="poisson")
+overdisp_fun(LF_sunsetGLMM) ## > 51
 # Get approximation of theta
 # This model has been updated to reflect the final variable evaluation (i.e., after variable reduction
 # using penalized spline terms); it initially included all variables and interactions of interest, 
 # including a third-order polynomial for day of year
 LF_sunsetGLMM <- glmmadmb(loPasses ~ doy + setdRh + tempDev + setdTemp +
                             setWp12 + tempDev:doy + setdTemp:doy +
-                            setVis + offset(ldetectors), 
+                            setVis + offset(ldetectors) + (1|year), 
                           data = scaledSunsetBats, 
                           family="nbinom")
+overdisp_fun(LF_sunsetGLMM) ## < 1.25
 LF_sunsetTheta <- LF_sunsetGLMM$alpha
 
 # Fit the GAMM (reduces to GLMM)
