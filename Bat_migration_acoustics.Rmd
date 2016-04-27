@@ -33,28 +33,27 @@ theme_update(panel.grid.minor = element_blank(),
 
 Supporting Information S2. Overview of the analysis of coastal bat acoustical activity.
 
-Here we provide a brief overview of the analysis of bat acoustical activity as it relates to regional atmospheric conditions.  The code and data referenced herein and necessary to reproduce this document and the full analysis are available freely at [https://github.com/adamdsmith/Bat_migration_acoustics](https://github.com/adamdsmith/Bat_migration_acoustics).
+We provide a brief overview of the analysis of bat acoustical activity as it relates to regional atmospheric conditions.  The code and data referenced herein and necessary to reproduce this document and the full analysis are available freely at [https://github.com/adamdsmith/Bat_migration_acoustics](https://github.com/adamdsmith/Bat_migration_acoustics).
 
 # Weather and radar data manipulation and consolidation
 
 We do not run this source code as it takes some significant computation time.  We provide the raw data only for the temperature deviation calculation (calculate_temperature_deviation.R), although the raw data for the 1- and 5-minute ASOS and NEXRAD analysis are available from the corresponding author. 
 
 ```{r weather-data, eval=FALSE}
-# Consolidate, organize, and calculate derived variables from 1-minute ASOS data
-# Produces ASOS1.rda
+# Consolidate, organize, and calculate derived variables from 1-minute ASOS 
+# data; produces ASOS1.rda
 source("./Source/read_ASOS1.R")
 
 # Use ASOS1 to calculate regional nightly averages of weather variables
 # Produces weatherVars.rda
 source("./Source/nightly_weather_ASOS1.R")
 
-# Consolidate, organize, and calculate derived variables from 5-minute ASOS data
-# Produces ASOS51.rda file
-# Produces nightSky.rda
+# Consolidate, organize, and calculate derived variables from 5-minute ASOS 
+# data; produces ASOS51.rda and nightSky.rda
 source("./Source/nightly_weather_ASOS5.R")
 
-# Calculate daily high temperature deviation from the 30-year average for a given day
-# Produces tempResids.rda
+# Calculate daily high temperature deviation from the 30-year average for a 
+# given day; produces tempResids.rda
 source("./Source/calculate_temperature_deviation.R")
 
 # NEXRAD radar scan manipulation and reflectivity calculations
@@ -94,14 +93,16 @@ source("./Source/merge_bats_weather.R") # Produces batsWeather.Rda
 
 Now we construct the generalized additive mixed models (GAMMS) that (1) associate nightly bat activity with nightly averaged regional weather variables and (2) use pre-sunset regional weather variables to anticipate bat activity in the forthcoming night.  It calculates four GAMM models - nightly and pre-sunset GAMMs for high and low frequency bats.  Additionally for the pre-sunset GAMMs, it calculates a leave-one-out cross-validated prediction assessment.  We do not run the source code here, but the reader can easily do so by uncommenting the appropriate source lines below.  
 
-Prior to fitting the GAMMs, the code calculates the nightly totals of high and low frequency bat passes and the number of active detectors (used as an offset in the GAMM models).  It also scales the nightly and pre-sunset weather variables.
+Prior to fitting the GAMMs, the code calculates the nightly totals of high and low frequency bat passes and the number of active detectors (used as an offset in the GAMM models). It also scales the nightly and pre-sunset weather variables. Additionally, it evaluates overdispersion under a Poisson model and negative binomial model. In all Poisson models, overdispersion was extreme (i.e., ratio of the sum of squared Pearson residuals to the residual degrees of freedom > 48). The negative binomial models provided much better fits (i.e., all ratios < 1.4).
 
 ```{r bat-activity-gamms, eval=FALSE}
 # Produces bat_activity_gamms.rda
-# Contains the scaled nightly and pre-sunset data sets, the high and low frequency nightly and pre-sunset
-# generalized linear mixed models (used to generate an estimate for the negative binomial theta
-# parameter in the corresponding GAMMs), the high and low frequency nightly and pre-sunset GAMMs, and
-# the high and low frequency pre-sunset cross-validation results.
+# Contains the scaled nightly and pre-sunset data sets, the high and low 
+# frequency nightly and pre-sunset generalized linear mixed models (used 
+# to generate an estimate for the negative binomial theta parameter in 
+# the corresponding GAMMs), the high and low frequency nightly and 
+# pre-sunset GAMMs, and the high and low frequency pre-sunset cross-
+# validation results.
 source("./Source/bat_activity_gamms.R")
 ```
 
@@ -166,12 +167,12 @@ source("./Source/make_figure_4.R")
 
 For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can visualize observed vs. predicted bat activity and identify the quantiles used to categorize the predictions into activity classes (figure S1 in supporting information S1).
 
-```{r activity-quantiles, echo = FALSE, fig.height=6.5, fig.width=6.5}
-source("./Source/visualize_CV_compartmentalization.R")
+```{r figure5, echo = FALSE, fig.height=6.5, fig.width=6.5}
+source("./Source/make_figure_5.R")
 ```
 
 Based on this compartmentalization, we can view the assessment of predictive accuracy based on the leave-on-out cross-validation (figure 5 in the manuscript).
 
-```{r cv-assessment, echo = FALSE, fig.width=6.5, fig.height=6.5}
-source("./Source/make_figure_5.R")
+```{r figure6, echo = FALSE, fig.width=6.5, fig.height=6.5}
+source("./Source/make_figure_6.R")
 ```
