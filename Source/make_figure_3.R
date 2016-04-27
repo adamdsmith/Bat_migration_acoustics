@@ -1,4 +1,5 @@
 ##### FIGURE 3 ######
+theme_set(theme_classic(base_size = 13))
 
 # Variables to plot, in desired plotting order
 plotVars <- c("doy", "nightWp12", "tempDev", "nightdTemp", "nightdMb")
@@ -19,8 +20,6 @@ modelVars <- c("tempDev", "nightdTemp", "nightWsp", "nightMb", "nightWp12", "nig
                "nightdMb", "propPrecip", "vis", "doy")
 
 for (var in plotVars) {
-  
-  plotDat <- data.frame()
   
   # Specify new data for prediction and intervals
   # It contains raw and scaled values of variable of interest over its range
@@ -50,6 +49,9 @@ for (var in plotVars) {
   }
   
   # Cycle through each model for this variable
+  plotDat <- data.frame()
+  pResid <- data.frame()
+  
   for (g in 1:length(gamList)) {
     model <- gamList[[g]]$gam
     
@@ -59,19 +61,25 @@ for (var in plotVars) {
     out$fit <- out$fit - coef(model)["(Intercept)"] - log(3)
     lcl <- with(out, fit - se.fit)
     ucl <- with(out, fit + se.fit)
-    tmpDat <- data.frame(grp = ifelse(g == 1, "hiF", "lowF"),
+    grp <- ifelse(g == 1, "hiF", "lowF")
+    tmpDat <- data.frame(grp = grp,
                          var = newDat[, paste0(var, "_raw")],
                          doy = newDat[, "doy"], 
                          fit = out$fit, lcl = lcl, ucl = ucl)
-    
+    fvTerms <- predict(model, type = "terms")
+    attr(fvTerms, "dimnames")[[2]] <- gsub("s\\(|\\)", "", attr(fvTerms, "dimnames")[[2]])
+    tmpResid <- data.frame(grp = grp,
+                           var = nightBats[, var],
+                           fit = fvTerms[, var] + residuals(model, type = "working"))
     plotDat <- rbind(plotDat, tmpDat)
+    pResid <- rbind(pResid, tmpResid)
   }
   
   # Create plot
   
   # Get some parameters for labels
-  ymin <- floor(ifelse(interx, min(plotDat$fit), min(plotDat$lcl)))
-  ymax <- ceiling(ifelse(interx, max(plotDat$fit), max(plotDat$ucl)))
+  ymin <- floor(ifelse(interx, min(plotDat$fit), min(pResid$fit)))
+  ymax <- ceiling(ifelse(interx, max(plotDat$fit), max(pResid$fit)))
   y_range <- ymax - ymin
   xmin <- min(plotDat$var); xmax <- max(plotDat$var); x_range <- xmax - xmin
   
@@ -105,9 +113,11 @@ for (var in plotVars) {
 
   } else {
     p <- ggplot(plotDat, aes(x = var, y = fit, group = grp)) + 
-      geom_ribbon(aes(ymin = lcl, ymax = ucl), alpha = 0.3) + 
-      geom_line(aes(linetype = grp), size = 1.25)
-  }
+        geom_ribbon(aes(ymin = lcl, ymax = ucl, group = grp), alpha = 0.3) + 
+        geom_line(aes(linetype = grp), size = 1.25) +
+        geom_point(data = pResid, aes(fill = grp), shape = 21, size = 0.75) + 
+        scale_fill_manual(values = c("black", NA))
+    }
   
   # Tidy the plot
   p <- p + 
@@ -124,7 +134,7 @@ for (var in plotVars) {
   index <- which(plotVars == var)
   p <- p + annotate("text", x = min(plotDat$var), y = ymax,
                     label = letters[index], hjust = 0, vjust=0.6,
-                    size = 8)
+                    size = 6)
   
   # Axis manipulation for multipanel plot
   p <-  p +
@@ -141,12 +151,15 @@ for (var in plotVars) {
                                 labels=c("15 Aug", "15 Sep", "15 Oct"))
   }
   
-  figure3[[var]] <- p
+  figure3[[var]] <- p + 
+      # Workaround for current ggplot2 bug
+      theme(axis.line.x = element_line(),
+            axis.line.y = element_line())
   
 }
 
 
-#tiff(file = "./Output/figure3.tif", width = 10, height = 6, units = "in", 
+#tiff(file = "./Output/figure3.tif", width = 8, height = 4.8, units = "in", 
 #     compression = "lzw", res = 1000)
 multiplot(plotlist = figure3, layout = matrix(1:6, ncol=3, byrow=T))
 #dev.off()
