@@ -19,5 +19,6 @@ To see an overview of the analysis (Supporting Information S2 of the manuscript)
 4. Render the file to a word document
   - rmarkdown::render('PATH/TO/Bat_migration_acoustics.Rmd', output_format = 'word_document')
 5. Open the resulting Word document
-  - we've included this file (Bat_migration_acoustics.docx) if you'd rather download it and open it directly
+  - alternatively, [view it online](Bat_migration_acoustics.md), or 
+  - download Bat_migration_acoustics.docx (above) and open it directly
 
