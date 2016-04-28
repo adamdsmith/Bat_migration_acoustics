@@ -13,11 +13,11 @@ To see an overview of the analysis (Supporting Information S2 of the manuscript)
 1. Fork this repository
   - all code and data is available in this repository
 2. Open [R](http://www.r-project.org) on a computer with internet access
-3. Install the [devtools](http://cran.r-project.org/package=devtools) and [knitr](http://cran.r-project.org/package=knitr) packages, if necessary 
+3. Install the [devtools](http://cran.r-project.org/package=devtools) and [rmarkdown](http://cran.r-project.org/package=rmarkdown) packages, if necessary 
   - install.packages("devtools")
-  - install.packages("knitr")
-4. Knit the file to produce an html document
-  - knitr::knit2html('PATH/TO/Bat_migration_acoustics.Rmd')
+  - install.packages("rmarkdown")
+4. Render the file to a word document
+  - rmarkdown::render('PATH/TO/Bat_migration_acoustics.Rmd', output_format = 'word_document')
 5. Open the resulting Word document
   - we've included this file (Bat_migration_acoustics.docx) if you'd rather download it and open it directly
 
