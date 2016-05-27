@@ -13,9 +13,9 @@ toLoad <- c("ggplot2", "gtable", "plyr", "reshape", "lubridate", "splines",
 instant_pkgs(toLoad); rm(toLoad)
 
 # To install glmmADMB you may have to use:
-install.packages("glmmADMB", repos=c("http://glmmadmb.r-forge.r-project.org/repos", 
-                                     getOption("repos")),
-                 type="source")
+#install.packages("glmmADMB", repos=c("http://glmmadmb.r-forge.r-project.org/repos", 
+#                                     getOption("repos")),
+#                 type="source")
 library("glmmADMB")
 
 # Setting theme
@@ -86,7 +86,7 @@ adj_batPhenology <- melt(adj_batPhenology[, c("EPFU", "LABO", "LACI", "LANO", "M
                                               "LFUN", "doy")], id = "doy")
 adj_batPhenology$group <- ifelse(adj_batPhenology$variable %in% c("LABO", "PESU", "MYSP", "HFUN"), "HF", "LF")
 
-### FIGURE S1 ###
+### FIGURE 2 ###
 phenPlots <- vector(mode = "list", length = 2); names(phenPlots) <- c("HF", "LF")
 for (i in c("HF", "LF")) {
   index <- which(c("HF", "LF") == i)
@@ -105,10 +105,12 @@ for (i in c("HF", "LF")) {
       ylab("# of passes / detector / night") + 
       geom_line(aes(linetype = variable)) +
       annotate("text", x = min(tmpSppDat$doy - 1), y = max(tmpSppDat$value), 
-               label = letters[index], hjust=0, size = 10) + 
+               label = letters[index], hjust=0, size = 9) + 
       scale_linetype("") +
       theme(legend.justification=c(0.5,0.5), legend.position=c(0.5, 1),
-            legend.direction = "horizontal")
+            legend.direction = "horizontal",
+            axis.line.x = element_line(),
+            axis.line.y = element_line())
   
   if (index == 1) {
       p <- p + scale_x_continuous("", limits = c(212, 308), breaks=c(215, 243, 273, 304), 
@@ -143,12 +145,7 @@ for (i in c("HF", "LF")) {
   phenPlots[[i]] <- ggdraw(p)
 }
 
-#tiff(file="./Output/figure2.tif", width = 6, height = 7.5, compression = "lzw",
-#     units = "in", res = 1000)
-#multiplot(plotlist = phenPlots, layout = matrix(1:2, ncol=1))
-#dev.off()
-
-setEPS()
-postscript("./Output/figure2.eps", width = 6, height = 7.5)
+tiff(file="./Output/figure2.tif", width = 6, height = 7.5, compression = "lzw",
+     units = "in", res = 600)
 multiplot(plotlist = phenPlots, layout = matrix(1:2, ncol=1))
 dev.off()
