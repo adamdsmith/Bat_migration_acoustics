@@ -1,4 +1,4 @@
-This repository contains the data and code necessary to reproduce the analysis in the manuscript "Bat activity during autumn relates to atmospheric conditions: implications for wind energy development" in revision at the *Journal of Mammalogy*.  
+This repository contains the data and code necessary to reproduce the analysis in the manuscript "Bat activity during autumn relates to atmospheric conditions: implications for wind energy development" in press at the *Journal of Mammalogy*.  
 
 Authors (affiliation):
 - Adam D. Smith<sup>*</sup> (Department of Natural Resources Science, University of Rhode Island, 105 Coastal Institute, 1 Greenhouse Road, Kingston, RI 02881 USA)
