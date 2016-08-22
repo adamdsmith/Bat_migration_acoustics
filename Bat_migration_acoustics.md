@@ -154,7 +154,7 @@ With model adequacy established, we can view the relationships from the model fi
 
 ![](./Rpubs/figs/figure4-1.png)<!-- -->
 
-For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can visualize observed vs. predicted bat activity and identify the quantiles used to categorize the predictions into activity classes (figure S1 in supporting information S1).
+For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can visualize observed vs. predicted bat activity and identify the quantiles used to categorize the predictions into activity classes (figure 5 in manuscript).
 
 ![](./Rpubs/figs/figure5-1.png)<!-- -->
 

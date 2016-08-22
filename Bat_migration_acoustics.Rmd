@@ -16,8 +16,8 @@ knitr::opts_chunk$set(dev="png",
 
 ```{r load-options-data, echo = FALSE}
 # Aliases and functions
-devtools::source_gist(9216051) # Rprofile.R
-devtools::source_gist(9216061) # various.R
+devtools::source_gist(9216051, filename = "Rprofile.R")
+devtools::source_gist(9216061, filename = "various.R")
 
 # Necessary packages
 toLoad <- c("ggplot2", "dsm", "grid")
@@ -167,7 +167,7 @@ source("./Source/make_figure_3.R")
 source("./Source/make_figure_4.R")
 ```
 
-For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can visualize observed vs. predicted bat activity and identify the quantiles used to categorize the predictions into activity classes (figure S1 in supporting information S1).
+For the predictive pre-sunset models, we also visualize certain aspects of the predictions.  First, we can visualize observed vs. predicted bat activity and identify the quantiles used to categorize the predictions into activity classes (figure 5 in manuscript).
 
 ```{r figure5, echo = FALSE, fig.height=6.5, fig.width=6.5}
 source("./Source/make_figure_5.R")
